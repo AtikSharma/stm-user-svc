@@ -17,44 +17,66 @@ import com.taskmanager.usermanagement.service.UserService;
 @Service
 public class UserServiceImpl implements UserService {
 
-	private UserDao userDao;
+    private final UserDao userDao;
 
-	@Autowired
-	public UserServiceImpl(UserDao userDao) {
-		this.userDao = userDao;
-	}
+    @Autowired
+    public UserServiceImpl(UserDao userDao) {
+        this.userDao = userDao;
+    }
 
-	@Override
-	public User getUserDetails(String identifier) throws ApplicationException {
-		if (StringUtils.isBlank(identifier)) {
-			throw new ApplicationException(ErrorConstants.ERROR_INVALID_IDENTIFIER, identifier);
-		}
-		return userDao.getUser(identifier)
-				.orElseThrow(() -> new ApplicationException(ErrorConstants.ERROR_USER_NOT_FOUND, identifier));
-	}
+    @Override
+    public User getUserDetailsByUsername(String username) throws ApplicationException {
+        if (StringUtils.isBlank(username)) {
+            throw new ApplicationException(ErrorConstants.ERROR_INVALID_USERNAME, username);
+        }
+        return userDao.getUserByUsername(username)
+                .orElseThrow(() -> new ApplicationException(ErrorConstants.ERROR_USER_NOT_FOUND_USERNAME, username));
+    }
 
-	@Override
-	public User userRegistration(User user) {
-		LocalDateTime now = LocalDateTime.now();
-		user = user.toBuilder().status(Status.ACTIVE).createdAt(now).updatedAt(now).build();
-		return userDao.registerUser(user);
-	}
+    @Override
+    public User userRegistration(User newUserDetails) {
+        LocalDateTime now = LocalDateTime.now();
+        return userDao.registerUser(newUserDetails.toBuilder().status(Status.ACTIVE).createdAt(now).updatedAt(now).build());
+    }
 
-	@Override
-	public User updateUser(User user) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public User updateUser(User user) {
+        User existingUser = getUserDetailsById(user.getId());
 
-	@Override
-	public User deleteUser(User user) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+        // Partial update: only update fields that are non-null/non-blank in the incoming user
+        if (user.getUsername() != null && !StringUtils.isBlank(user.getUsername())) {
+            existingUser.setUsername(user.getUsername());
+        }
+        if (user.getEmail() != null && !StringUtils.isBlank(user.getEmail())) {
+            existingUser.setEmail(user.getEmail());
+        }
+        if (user.getPassword() != null && !StringUtils.isBlank(user.getPassword())) {
+            existingUser.setPassword(user.getPassword());
+        }
+        // Do not update createdAt
+        existingUser.setUpdatedAt(LocalDateTime.now());
 
-	@Override
-	public List<User> getAllUsers() {
-		return userDao.getAllUsers();
-	}
+        return userDao.updateUser(existingUser);
+    }
+
+    @Override
+    public User deleteUser(User user) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<User> getAllUsers(Boolean includeInactive) {
+        return userDao.getAllUsers(includeInactive);
+    }
+
+    @Override
+    public User getUserDetailsById(String id) throws ApplicationException {
+        if (StringUtils.isBlank(id)) {
+            throw new ApplicationException(ErrorConstants.ERROR_INVALID_ID, id);
+        }
+        return userDao.getUserById(id)
+                .orElseThrow(() -> new ApplicationException(ErrorConstants.ERROR_USER_NOT_FOUND_USERNAME, id));
+    }
 
 }

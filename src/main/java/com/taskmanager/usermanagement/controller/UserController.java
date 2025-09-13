@@ -2,17 +2,16 @@ package com.taskmanager.usermanagement.controller;
 
 import java.util.List;
 
+import com.taskmanager.common.constants.JwtConstants;
+import com.taskmanager.usermanagement.model.request.UserUpdateRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.QueryParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.taskmanager.common.RequestContext;
 import com.taskmanager.common.constants.CommonConstants;
@@ -32,51 +31,72 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
-@RequestMapping(value = CommonConstants.BASE_URL_USER)
+@RequestMapping(value = CommonConstants.BASE_URL_USER_V1)
 public class UserController {
 
-	private UserService userService;
+    private final UserService userService;
 
-	private UserBOMapper userBOMapper;
+    private final UserBOMapper userBOMapper;
 
-	private JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
 
-	@Autowired
-	public UserController(UserService userService, UserBOMapper userBOMapper, JwtUtils jwtUtils) {
-		this.userService = userService;
-		this.userBOMapper = userBOMapper;
-		this.jwtUtils = jwtUtils;
-	}
+    @Autowired
+    public UserController(UserService userService, UserBOMapper userBOMapper, JwtUtils jwtUtils) {
+        this.userService = userService;
+        this.userBOMapper = userBOMapper;
+        this.jwtUtils = jwtUtils;
+    }
 
-	@PostMapping(path = CommonConstants.REGISTER)
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "User Registration API", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE)) })
-	public ResponseEntity<UserBase> registration(@RequestBody RegistrationRequest registrationRequest,
-			@RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, required = true) String authorizationHeader) {
-		jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.SYSTEM));
-		User user = userBOMapper.mapFromRegistrationRequest(registrationRequest);
-		user = userService.userRegistration(user);
-		UserBase userBase = userBOMapper.mapFrom(user);
-		return new ServiceResponse().build("User is Registered", HttpStatus.CREATED, userBase);
-	}
+    @PostMapping(path = CommonConstants.API_USERS_REGISTER)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "User Registration API", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
+    public ResponseEntity<UserBase> registration(@RequestBody RegistrationRequest registrationRequest) {
+        User user = userBOMapper.mapFromRegistrationRequest(registrationRequest);
+        user = userService.userRegistration(user);
+        UserBase userBase = userBOMapper.mapFrom(user);
+        return new ServiceResponse().build("User is Registered", HttpStatus.CREATED, userBase);
+    }
 
-	@GetMapping(path = CommonConstants.USERS_API_USER + "{identifier}")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "User Details", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE)) })
-	public ResponseEntity<User> getUserDetailsByIdentifier(@PathVariable String identifier,
-			@RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, required = true) String authorizationHeader) {
-		jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.values()));
-		return new ServiceResponse().build("User Details", HttpStatus.OK, userService.getUserDetails(identifier));
-	}
+    @GetMapping(path = CommonConstants.API_GET_USER_BY_USERNAME)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User Details by username", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
+    public ResponseEntity<User> getUserDetailsByUsername(@PathVariable String username,
+                                                         @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader) {
+        jwtUtils.validateAccess(authorizationHeader, Role.SYSTEM);
+        return new ServiceResponse().build("User Details", HttpStatus.OK, userService.getUserDetailsByUsername(username));
+    }
 
-	@GetMapping
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "User Details", content = @Content(schema = @Schema(implementation = UsersDetailResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE)) })
-	public ResponseEntity<UsersDetailResponse> getAllUsers(
-			@RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, required = true) String authorizationHeader) {
-		jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.ADMIN, Role.MANAGER));
-		List<User> users = userService.getAllUsers();
-		UsersDetailResponse response = new UsersDetailResponse(userBOMapper.mapToUserBase(users));
-		return response.build("Loaded all the Users", HttpStatus.OK, response);
-	}
+    @GetMapping(path = CommonConstants.API_GET_USER_BY_ID)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User Details by id", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
+    public ResponseEntity<User> getUserDetailsById(@PathVariable String id,
+                                                         @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader) {
+        jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.values()));
+        return new ServiceResponse().build("User Details", HttpStatus.OK, userService.getUserDetailsById(id));
+    }
+
+    @GetMapping
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All Users", content = @Content(schema = @Schema(implementation = UsersDetailResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
+    public ResponseEntity<UsersDetailResponse> getAllUsers(
+            @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader, @QueryParam("includeInactive") Boolean includeInactive) {
+        jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.ADMIN, Role.MANAGER));
+        List<User> users = userService.getAllUsers(includeInactive);
+        UsersDetailResponse response = new UsersDetailResponse(userBOMapper.mapToUserBase(users));
+        return response.build("Loaded all the Users", HttpStatus.OK, response);
+    }
+
+    @PutMapping(path = CommonConstants.API_UPDATE_USER)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Update User", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
+    public ResponseEntity<UserBase> updateUser(@PathVariable String id, @RequestBody UserUpdateRequest userUpdateRequest,
+    		@RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader) {
+        jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.ADMIN, Role.MANAGER, Role.USER));
+        User user = userBOMapper.mapFromUpdateRequest(userUpdateRequest);
+        user.setId(id);
+        user = userService.updateUser(user);
+        UserBase userBase = userBOMapper.mapFrom(user);
+        return new ServiceResponse().build("User is updated", HttpStatus.ACCEPTED, userBase);
+    }
+
 }

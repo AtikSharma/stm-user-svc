@@ -7,7 +7,7 @@ import com.taskmanager.common.model.User;
 
 public interface UserDao {
 
-	public Optional<User> getUser(String identifier);
+	public Optional<User> getUserByUsername(String username);
 
 	public User registerUser(User user);
 
@@ -15,5 +15,7 @@ public interface UserDao {
 
 	public User deleteUser(User user);
 
-	public List<User> getAllUsers();
+	public List<User> getAllUsers(Boolean includeInactive);
+
+	public Optional<User> getUserById(String id);
 }

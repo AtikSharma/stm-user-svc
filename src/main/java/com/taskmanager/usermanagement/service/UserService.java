@@ -13,7 +13,9 @@ public interface UserService {
 
 	public User deleteUser(User user);
 
-	public User getUserDetails(String identifier) throws ApplicationException;
+	public User getUserDetailsByUsername(String username) throws ApplicationException;
 
-	public List<User> getAllUsers();
+	public List<User> getAllUsers(Boolean includeInactive);
+
+	public User getUserDetailsById(String id) throws ApplicationException;
 }

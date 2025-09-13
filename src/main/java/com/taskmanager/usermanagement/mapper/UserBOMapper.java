@@ -2,6 +2,8 @@ package com.taskmanager.usermanagement.mapper;
 
 import java.util.List;
 
+import com.taskmanager.usermanagement.model.request.UserUpdateRequest;
+import jakarta.validation.Valid;
 import org.mapstruct.Mapper;
 
 import com.taskmanager.common.model.User;
@@ -19,4 +21,7 @@ public interface UserBOMapper {
 	UserBase mapFrom(User user);
 
 	List<UserBase> mapToUserBase(List<User> users);
+
+	User mapFromUpdateRequest(UserUpdateRequest userUpdateRequest);
+
 }
