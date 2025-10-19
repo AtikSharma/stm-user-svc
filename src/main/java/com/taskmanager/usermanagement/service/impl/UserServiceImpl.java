@@ -1,27 +1,32 @@
 package com.taskmanager.usermanagement.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.taskmanager.common.constants.ErrorConstants;
 import com.taskmanager.common.enums.Status;
 import com.taskmanager.common.exception.ApplicationException;
 import com.taskmanager.common.model.User;
 import com.taskmanager.common.util.StringUtils;
+import com.taskmanager.usermanagement.constants.AuditLogConstants;
 import com.taskmanager.usermanagement.dao.UserDao;
+import com.taskmanager.usermanagement.model.request.StatusRoleUpdateRequest;
 import com.taskmanager.usermanagement.service.UserService;
+import com.taskmanager.usermanagement.util.AuditLogUtility;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
+    private final AuditLogUtility auditLogUtility;
 
     @Autowired
-    public UserServiceImpl(UserDao userDao) {
+    public UserServiceImpl(UserDao userDao, AuditLogUtility auditLogUtility) {
         this.userDao = userDao;
+        this.auditLogUtility = auditLogUtility;
     }
 
     @Override
@@ -34,12 +39,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public User userRegistration(User newUserDetails) {
         LocalDateTime now = LocalDateTime.now();
-        return userDao.registerUser(newUserDetails.toBuilder().status(Status.ACTIVE).createdAt(now).updatedAt(now).build());
+        User newUser = userDao.registerUser(newUserDetails.toBuilder().status(Status.ACTIVE).createdAt(now).updatedAt(now).build());
+        auditLogUtility.logAction(AuditLogConstants.ACTION_USER_REGISTER, newUser.getId());
+        return newUser;
     }
 
     @Override
+    @Transactional
     public User updateUser(User user) {
         User existingUser = getUserDetailsById(user.getId());
 
@@ -56,18 +65,22 @@ public class UserServiceImpl implements UserService {
         // Do not update createdAt
         existingUser.setUpdatedAt(LocalDateTime.now());
 
-        return userDao.updateUser(existingUser);
+        User updatedUser = userDao.updateUser(existingUser);
+
+        auditLogUtility.logAction(AuditLogConstants.ACTION_USER_UPDATE, updatedUser.getId());
+        return updatedUser;
     }
 
     @Override
-    public User deleteUser(User user) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public List<User> getAllUsers(Boolean includeInactive) {
-        return userDao.getAllUsers(includeInactive);
+    public List<User> getAllUsers(Boolean includeInactive, Boolean isDetailsRequired) {
+        List<User> users = userDao.getAllUsers(includeInactive);
+        if (isDetailsRequired != null && !isDetailsRequired) {
+            users.forEach(user -> {
+                user.setEmail(null);
+                user.setPassword(null);
+            }); // Remove sensitive details
+        }
+        return users;
     }
 
     @Override
@@ -77,6 +90,23 @@ public class UserServiceImpl implements UserService {
         }
         return userDao.getUserById(id)
                 .orElseThrow(() -> new ApplicationException(ErrorConstants.ERROR_USER_NOT_FOUND_USERNAME, id));
+    }
+
+    @Override
+    @Transactional
+    public void updateStatusRole(String userId, StatusRoleUpdateRequest statusRoleUpdateRequest) {
+        User existingUser = getUserDetailsById(userId);
+
+        if (statusRoleUpdateRequest.getStatus() != null) {
+            existingUser.setStatus(statusRoleUpdateRequest.getStatus());
+        }
+        if (statusRoleUpdateRequest.getRole() != null) {
+            existingUser.setRole(statusRoleUpdateRequest.getRole());
+        }
+
+        existingUser.setUpdatedAt(LocalDateTime.now());
+        userDao.updateUser(existingUser);
+        auditLogUtility.logAction(AuditLogConstants.ACTION_USER_STATUS_ROLE_UPDATE, existingUser.getId());
     }
 
 }

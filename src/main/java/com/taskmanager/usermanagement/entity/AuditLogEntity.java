@@ -40,7 +40,4 @@ public class AuditLogEntity {
 	@Column(nullable = false)
 	private LocalDateTime timestamp;
 
-	@Column(length = 50)
-	private String ipAddress;
-
 }
