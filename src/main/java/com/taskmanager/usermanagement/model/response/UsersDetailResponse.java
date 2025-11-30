@@ -1,15 +1,10 @@
 package com.taskmanager.usermanagement.model.response;
 
-import java.util.List;
-
 import com.taskmanager.common.model.ServiceResponse;
-import com.taskmanager.common.model.UserBase;
+import com.taskmanager.common.model.User;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -18,5 +13,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UsersDetailResponse extends ServiceResponse {
 
-	List<UserBase> users;
+	List<User> users;
 }

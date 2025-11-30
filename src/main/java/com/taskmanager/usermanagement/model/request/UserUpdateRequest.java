@@ -16,6 +16,12 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 public class UserUpdateRequest {
 
+    @Schema(description = "First Name of the user", example = "John")
+    private String firstName;
+
+    @Schema(description = "Last Name of the user", example = "Doe")
+    private String lastName;
+
     @Schema(description = "Username of the user", example = "john_doe")
     private String username;
 

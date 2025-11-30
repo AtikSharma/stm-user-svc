@@ -12,11 +12,11 @@ public interface UserService {
 
 	public User updateUser(User user);
 
-	public User getUserDetailsByUsername(String username) throws ApplicationException;
+	public User getUserDetailsByUsername(String username, Boolean isDetailsRequired) throws ApplicationException;
 
 	public List<User> getAllUsers(Boolean includeInactive, Boolean isDetailsRequired);
 
-	public User getUserDetailsById(String id) throws ApplicationException;
+	public User getUserDetailsById(String id, Boolean isDetailsRequired) throws ApplicationException;
 
 	public void updateStatusRole(String id, StatusRoleUpdateRequest statusRoleUpdateRequest);
 }

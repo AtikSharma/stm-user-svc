@@ -55,24 +55,24 @@ public class UserController {
 
     @GetMapping(path = CommonConstants.API_GET_USER_BY_USERNAME)
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "User Details by username", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
-    public ResponseEntity<User> getUserDetailsByUsername(@PathVariable String username, @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader) {
+    public ResponseEntity<User> getUserDetailsByUsername(@PathVariable String username, @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader, @RequestParam(value = CommonConstants.REQUEST_PARAM_IS_DETAILS_REQUIRED, defaultValue = "false") Boolean isDetailsRequired) {
         jwtUtils.validateAccess(authorizationHeader, Role.SYSTEM);
-        return new ServiceResponse().build("User Details", HttpStatus.OK, userService.getUserDetailsByUsername(username));
+        return new ServiceResponse().build("User Details", HttpStatus.OK, userService.getUserDetailsByUsername(username, isDetailsRequired));
     }
 
     @GetMapping(path = CommonConstants.API_GET_USER_BY_ID)
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "User Details by id", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
-    public ResponseEntity<User> getUserDetailsById(@PathVariable String id, @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader) {
+    public ResponseEntity<User> getUserDetailsById(@PathVariable String id, @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader, @RequestParam(value = CommonConstants.REQUEST_PARAM_IS_DETAILS_REQUIRED, defaultValue = "false") Boolean isDetailsRequired) {
         jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.values()));
-        return new ServiceResponse().build("User Details", HttpStatus.OK, userService.getUserDetailsById(id));
+        return new ServiceResponse().build("User Details", HttpStatus.OK, userService.getUserDetailsById(id, isDetailsRequired));
     }
 
     @GetMapping
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "All Users", content = @Content(schema = @Schema(implementation = UsersDetailResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
-    public ResponseEntity<UsersDetailResponse> getAllUsers(@RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader, @QueryParam("includeInactive") Boolean includeInactive, @RequestParam(value = "isDetailsRequired", defaultValue = "true") Boolean isDetailsRequired) {
+    public ResponseEntity<UsersDetailResponse> getAllUsers(@RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader, @QueryParam(CommonConstants.REQUEST_PARAM_INCLUDE_INACTIVE) Boolean includeInactive, @RequestParam(value = CommonConstants.REQUEST_PARAM_IS_DETAILS_REQUIRED, defaultValue = "true") Boolean isDetailsRequired) {
         jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.ADMIN, Role.MANAGER, Role.SYSTEM));
         List<User> users = userService.getAllUsers(includeInactive, isDetailsRequired);
-        UsersDetailResponse response = new UsersDetailResponse(userBOMapper.mapToUserBase(users));
+        UsersDetailResponse response = new UsersDetailResponse(users);
         return response.build("Loaded all the Users", HttpStatus.OK, response);
     }
 
@@ -80,8 +80,7 @@ public class UserController {
     @ApiResponses(value = {@ApiResponse(responseCode = "202", description = "Update User", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
     public ResponseEntity<UserBase> updateUser(@PathVariable String id, @RequestBody UserUpdateRequest userUpdateRequest, @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader) {
         jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.ADMIN, Role.MANAGER, Role.USER));
-        User user = userBOMapper.mapFromUpdateRequest(userUpdateRequest);
-        user.setId(id);
+        User user = userBOMapper.mapFromUpdateRequest(userUpdateRequest, id);
         user = userService.updateUser(user);
         UserBase userBase = userBOMapper.mapFrom(user);
         return new ServiceResponse().build("User is updated", HttpStatus.ACCEPTED, userBase);

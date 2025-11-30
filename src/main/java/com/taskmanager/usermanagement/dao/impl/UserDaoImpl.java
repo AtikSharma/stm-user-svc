@@ -1,5 +1,7 @@
 package com.taskmanager.usermanagement.dao.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +56,11 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> getAllUsers(Boolean includeInactive) {
-        List<UserEntity> userEntities = userRepository.findAllByStatusIn(includeInactive != null && includeInactive.equals(true) ? List.of(Status.INACTIVE) : List.of(Status.ACTIVE, Status.BLOCKED));
+        List<Status> statuses = new ArrayList<>(Arrays.asList(Status.ACTIVE, Status.BLOCKED));
+        if (Optional.ofNullable(includeInactive).orElse(false)) {
+            statuses.add(Status.INACTIVE);
+        }
+        List<UserEntity> userEntities = userRepository.findAllByStatusIn(statuses);
         return userEntityMapper.mapFromUserEntities(userEntities);
     }
 
