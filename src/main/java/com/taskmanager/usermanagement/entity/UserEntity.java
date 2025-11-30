@@ -1,61 +1,51 @@
 package com.taskmanager.usermanagement.entity;
 
-import java.time.LocalDateTime;
-
 import com.taskmanager.common.enums.Role;
 import com.taskmanager.common.enums.Status;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @SuperBuilder(toBuilder = true)
-@Entity
-@Table(name = "users")
+@Document(collection = "user_db")
 @NoArgsConstructor
 public class UserEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	private String id;
+    @Id
+    private String id;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Indexed(unique = true)
     private String firstName;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Indexed(unique = true)
     private String lastName;
 
-    @Column(unique = true, nullable = false, length = 50)
-	private String username;
+    @Indexed(unique = true)
+    private String username;
 
-	@Column(unique = true, nullable = false, length = 100)
-	private String email;
+    @Indexed(unique = true)
+    private String email;
 
-	@Column(nullable = false)
-	private String password;
+    @NotNull(message = "password must not be null")
+    private String password;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 20)
-	private Role role;
+    @NotNull(message = "Role must not be null")
+    private Role role;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 20)
-	private Status status = Status.ACTIVE;
+    @NotNull(message = "Status must not be null")
+    private Status status = Status.ACTIVE;
 
-	@Column(nullable = false, updatable = false)
-	private LocalDateTime createdAt;
+    @NotNull
+    private LocalDateTime createdAt;
 
-	@Column(nullable = false)
-	private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt;
 }

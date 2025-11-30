@@ -2,34 +2,45 @@ package com.taskmanager.usermanagement.repository.specification;
 
 import java.util.UUID;
 
-import org.springframework.data.jpa.domain.Specification;
+import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 import com.taskmanager.common.enums.Status;
 import com.taskmanager.common.util.StringUtils;
-import com.taskmanager.usermanagement.entity.UserEntity;
-
-import jakarta.persistence.criteria.Predicate;
 
 public class UserSpecification {
 
-	public static Specification<UserEntity> matchIdentifier(String identifier) {
-		return (root, query, cb) -> {
-			Predicate predicate = null;
-			if (StringUtils.isValidUUID.test(identifier)) {
-				predicate = cb.equal(root.get("id"), UUID.fromString(identifier));
-			} else if (StringUtils.isValidEmail.test(identifier)) {
-				predicate = cb.equal(root.get("email"), identifier);
-			} else {
-				predicate = cb.equal(root.get("username"), identifier);
-			}
-			return predicate;
-		};
-	}
+    /**
+     * Build a MongoDB Query that matches a user by identifier (UUID, ObjectId, email or username).
+     * Returns an empty Query if identifier is null/blank.
+     */
+    public static Query matchIdentifier(String identifier) {
+        Query query = new Query();
+        if (identifier == null || identifier.trim().isEmpty()) {
+            return query;
+        }
 
-	public static Specification<UserEntity> matchIdentifier(String identifier, Status status) {
-		return matchIdentifier(identifier).and((root, query, cb) -> {
-			Predicate predicate = cb.equal(root.get("status"), Status.ACTIVE);
-			return predicate;
-		});
-	}
+        if (StringUtils.isValidUUID.test(identifier)) {
+            query.addCriteria(Criteria.where("id").is(UUID.fromString(identifier)));
+        } else if (ObjectId.isValid(identifier)) {
+            query.addCriteria(Criteria.where("id").is(new ObjectId(identifier)));
+        } else if (StringUtils.isValidEmail.test(identifier)) {
+            query.addCriteria(Criteria.where("email").is(identifier));
+        } else {
+            query.addCriteria(Criteria.where("username").is(identifier));
+        }
+        return query;
+    }
+
+    /**
+     * Build a MongoDB Query that matches a user by identifier and status.
+     */
+    public static Query matchIdentifier(String identifier, Status status) {
+        Query query = matchIdentifier(identifier);
+        if (status != null) {
+            query.addCriteria(Criteria.where("status").is(status));
+        }
+        return query;
+    }
 }

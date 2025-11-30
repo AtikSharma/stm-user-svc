@@ -22,7 +22,7 @@ public class AuditLogUtility {
     public void logAction(String action, String userId) {
         AuditLogEntity auditLogEntity = AuditLogEntity.builder()
                 .actionType(action)
-                .user(UserEntity.builder().id(userId).build())
+                .user(userId)
                 .timestamp(java.time.LocalDateTime.now())
                 .build();
         auditLogRepo.save(auditLogEntity);
