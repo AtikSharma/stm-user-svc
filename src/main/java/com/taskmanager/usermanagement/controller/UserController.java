@@ -14,6 +14,7 @@ import com.taskmanager.usermanagement.model.request.StatusRoleUpdateRequest;
 import com.taskmanager.usermanagement.model.request.UserUpdateRequest;
 import com.taskmanager.usermanagement.model.response.UsersDetailResponse;
 import com.taskmanager.usermanagement.service.UserService;
+import com.taskmanager.usermanagement.util.UserValidator;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,16 +38,20 @@ public class UserController {
 
     private final JwtUtils jwtUtils;
 
+    private final UserValidator userValidator;
+
     @Autowired
-    public UserController(UserService userService, UserBOMapper userBOMapper, JwtUtils jwtUtils) {
+    public UserController(UserService userService, UserBOMapper userBOMapper, JwtUtils jwtUtils, UserValidator userValidator) {
         this.userService = userService;
         this.userBOMapper = userBOMapper;
         this.jwtUtils = jwtUtils;
+        this.userValidator = userValidator;
     }
 
     @PostMapping(path = CommonConstants.API_USERS_REGISTER)
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "User Registration API", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
     public ResponseEntity<UserBase> registration(@RequestBody RegistrationRequest registrationRequest) {
+        userValidator.validateRequest(registrationRequest);
         User user = userBOMapper.mapFromRegistrationRequest(registrationRequest);
         user = userService.userRegistration(user);
         UserBase userBase = userBOMapper.mapFrom(user);
