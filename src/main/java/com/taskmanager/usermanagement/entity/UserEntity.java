@@ -2,6 +2,7 @@ package com.taskmanager.usermanagement.entity;
 
 import com.taskmanager.common.enums.Role;
 import com.taskmanager.common.enums.Status;
+import com.taskmanager.common.model.AuditEntity;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,14 +12,12 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @SuperBuilder(toBuilder = true)
 @Document(collection = "user_db")
 @NoArgsConstructor
-public class UserEntity {
+public class UserEntity extends AuditEntity {
 
     @Id
     private String id;
@@ -44,8 +43,4 @@ public class UserEntity {
     @NotNull(message = "Status must not be null")
     private Status status = Status.ACTIVE;
 
-    @NotNull
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
 }

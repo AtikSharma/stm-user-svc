@@ -18,5 +18,5 @@ public interface UserService {
 
 	public User getUserDetailsById(String id, Boolean isDetailsRequired) throws ApplicationException;
 
-	public void updateStatusRole(String id, StatusRoleUpdateRequest statusRoleUpdateRequest);
+	public void updateStatusRole(String id, StatusRoleUpdateRequest statusRoleUpdateRequest, String userId);
 }

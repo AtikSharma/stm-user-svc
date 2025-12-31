@@ -85,7 +85,9 @@ public class UserController {
     @ApiResponses(value = {@ApiResponse(responseCode = "202", description = "Update User", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
     public ResponseEntity<UserBase> updateUser(@PathVariable String id, @RequestBody UserUpdateRequest userUpdateRequest, @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader) {
         jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.ADMIN, Role.MANAGER, Role.USER));
+        String userId = jwtUtils.extractUserIdFromToken(authorizationHeader);
         User user = userBOMapper.mapFromUpdateRequest(userUpdateRequest, id);
+        user.setUpdatedBy(userId);
         user = userService.updateUser(user);
         UserBase userBase = userBOMapper.mapFrom(user);
         return new ServiceResponse().build("User is updated", HttpStatus.ACCEPTED, userBase);
@@ -95,7 +97,8 @@ public class UserController {
     @ApiResponses(value = {@ApiResponse(responseCode = "202", description = "Update User's Role/Status", content = @Content(schema = @Schema(implementation = ServiceResponse.class), mediaType = MediaType.APPLICATION_JSON_VALUE))})
     public ResponseEntity<Void> updateStatusRole(@PathVariable String id, @RequestHeader(name = RequestContext.HEADER_FIELD_AUTHORIZATION, defaultValue = JwtConstants.DEFAULT_AUTHORIZATION, required = true) String authorizationHeader, @RequestBody StatusRoleUpdateRequest statusRoleUpdateRequest) {
         jwtUtils.validateAccess(authorizationHeader, Role.getRoleList(Role.ADMIN));
-        userService.updateStatusRole(id, statusRoleUpdateRequest);
+        String userId = jwtUtils.extractUserIdFromToken(authorizationHeader);
+        userService.updateStatusRole(id, statusRoleUpdateRequest,userId);
         return new ServiceResponse().build("Update User Role/Status updated", HttpStatus.ACCEPTED, null);
     }
 

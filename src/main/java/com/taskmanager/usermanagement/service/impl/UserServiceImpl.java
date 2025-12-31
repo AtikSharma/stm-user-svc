@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User userRegistration(User newUserDetails) {
         LocalDateTime now = LocalDateTime.now();
-        User newUser = userDao.registerUser(newUserDetails.toBuilder().status(Status.ACTIVE).createdAt(now).updatedAt(now).build());
+        User newUser = userDao.registerUser(newUserDetails.toBuilder().status(Status.ACTIVE).createdAt(now).createdBy("User").build());
         auditLogUtility.logAction(AuditLogConstants.ACTION_USER_REGISTER, newUser.getId());
         return newUser;
     }
@@ -91,7 +91,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void updateStatusRole(String userId, StatusRoleUpdateRequest statusRoleUpdateRequest) {
+    public void updateStatusRole(String userId, StatusRoleUpdateRequest statusRoleUpdateRequest, String updatedBy) {
         User existingUser = getUserDetailsById(userId, true);
 
         if (statusRoleUpdateRequest.getStatus() != null) {
@@ -102,6 +102,7 @@ public class UserServiceImpl implements UserService {
         }
 
         existingUser.setUpdatedAt(LocalDateTime.now());
+        existingUser.setUpdatedBy(updatedBy);
         userDao.updateUser(existingUser);
         auditLogUtility.logAction(AuditLogConstants.ACTION_USER_STATUS_ROLE_UPDATE, existingUser.getId());
     }

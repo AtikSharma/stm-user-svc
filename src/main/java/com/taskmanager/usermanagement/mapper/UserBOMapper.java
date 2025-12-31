@@ -17,6 +17,7 @@ public interface UserBOMapper {
 
     List<User> mapToUserBase(List<User> users);
 
+    @Mapping(target = "id", source = "userId")
     User mapFromUpdateRequest(UserUpdateRequest userUpdateRequest, String userId);
 
     @Mapping(target = "id", ignore = true)
